@@ -1,6 +1,6 @@
 from sqlalchemy import func, desc, distinct
 from api_queries.postgres_db.connect import session_maker
-from api_queries.postgres_db.models import AttackType
+from api_queries.postgres_db.models import AttackType, TargetType
 from api_queries.postgres_db.models.city_model import City
 from api_queries.postgres_db.models.country_model import Country
 
@@ -147,17 +147,12 @@ def groups_with_common_targets(region=None, country=None):
     .join(Country, City.country_id == Country.id) \
     .join(Region, Country.region_id == Region.id) \
     .group_by(Event.target_type_id, Region.name, Country.name)
-
-    # Apply filters based on region or country
     if region:
         query = query.filter(Region.name == region)
     if country:
         query = query.filter(Country.name == country)
-
-    # Fetch results ordered by group count descending
     results = query.order_by(func.count(Group.id).desc()).all()
 
-    # Transform results for map display
     markers = []
     for result in results:
         markers.append({
@@ -200,6 +195,53 @@ def regions_with_common_attack_strategies(region=None, country=None):
         }
         for result in results
     ]
+
+def groups_with_similar_target_preferences():
+    query = session.query(
+        TargetType.name.label('target_type'),
+        func.count(distinct(Group.id)).label('unique_groups_count'),
+        func.array_agg(distinct(Group.name)).label('group_names')
+    ) \
+    .join(Event, TargetType.id == Event.target_type_id) \
+    .join(Group, Event.group_id == Group.id) \
+    .group_by(TargetType.name)
+
+    results = query.order_by(func.count(distinct(Group.id)).desc()).all()
+    return [
+        {
+            'target_type': result.target_type,
+            'unique_groups_count': result.unique_groups_count,
+            'group_names': result.group_names
+        }
+        for result in results
+    ]
+
+def regions_with_high_intergroup_activity(region=None):
+    query = session.query(
+        Region.name.label('region_name'),
+        func.count(distinct(Group.id)).label('unique_groups_count'),
+        func.array_agg(distinct(Group.name)).label('group_names')
+    ) \
+    .join(Event, Group.id == Event.group_id) \
+    .join(City, Event.city_id == City.id) \
+    .join(Country, City.country_id == Country.id) \
+    .join(Region, Country.region_id == Region.id) \
+    .group_by(Region.name)
+
+    if region:
+        query = query.filter(Region.name == region)
+
+    results = query.order_by(func.count(distinct(Group.id)).desc()).all()
+    return [
+        {
+            'region': result.region_name,
+            'unique_groups_count': result.unique_groups_count,
+            'group_names': result.group_names
+        }
+        for result in results
+    ]
+
+
 
 
 

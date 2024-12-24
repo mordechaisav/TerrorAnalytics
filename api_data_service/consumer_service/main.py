@@ -1,7 +1,6 @@
 import json
 import logging
 from kafka import KafkaConsumer
-from kafka.errors import KafkaError
 from api_data_service.config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC
 from api_data_service.consumer_service.services.processing_service import process_article
 from api_data_service.database_mongo.db_connection import MongoDBConnection

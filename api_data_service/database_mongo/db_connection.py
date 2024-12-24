@@ -10,7 +10,6 @@ class MongoDBConnection:
             connection_string = f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}"
             print(f"Trying to connect to MongoDB with: {connection_string}")
             self.client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
-            # Test the connection
             self.client.server_info()
             print("Successfully connected to MongoDB")
             self.db = self.client[MONGO_DB_NAME]
