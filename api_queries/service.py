@@ -53,6 +53,7 @@ def regions_severity_locations(limit=5):
 
     return new_regions
 
+
 def regions_max_diff():
     regions = max_difference_between_consecutive_years_with_percentage()
     for region in regions:
